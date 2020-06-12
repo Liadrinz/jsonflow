@@ -113,8 +113,8 @@ if __name__ == '__main__':
     lambda data : BeautifulSoup(data, 'lxml'),
     lambda soup : soup.title.text,
     {'length': len, 'md5': digest})
-# 等价于lambda title : [len(title), digest(title)]
-# 也等价于[lambda title : len(title), lambda title : digest(title)]
+# 等价于lambda title : {'length': len(title), 'md5': digest(title)}
+# 也等价于{'length': lambda title : len(title), 'md5': lambda title : digest(title)}
 def get_title_length_and_md5(name):
     return get_data()
 

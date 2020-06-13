@@ -17,7 +17,7 @@ class _Concurrent:
                             callback(data)
                     except Exception as e:
                         traceback.print_exc()
-                self.pool.submit(task)
+                return self.pool.submit(task)
             return inner_wrapper
         return wrapper
 

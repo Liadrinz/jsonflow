@@ -1,4 +1,4 @@
-from hashlib import md5
+import re
 
 from jsonflow.decorators import src, flow, thread
 from jsonflow.access import get_data
@@ -9,23 +9,47 @@ from bs4 import BeautifulSoup
 
 config.max_workers = 4  # 线程数
 
-# 注册变量
-jflow.prefix = 'lang-'
-jflow.suffix = '-info'
+def preprocess_item(html):
+    data = {}
+    soup = BeautifulSoup(html, 'lxml')
+    basicInfoBox = soup.find('div', {'class': 'basic-info'})
+    for dl in basicInfoBox.findAll('dl'):
+        for k, v in zip(dl.findAll('dt'), dl.findAll('dd')):
+            data[k.text] = v.text
+    return data
 
-# 获取md5
-def digest(s):
-    return md5(s.encode()).hexdigest()
-
-@thread(callback=lambda data : print(data))  # 通过回调获取数据
-@src('https://baike.baidu.com/item/<name>')
+@thread(callback=lambda data : print(data))
+@src('https://baike.baidu.com/item/<name>', inherit_cookies=True)
 @flow(
-    lambda data : BeautifulSoup(data, 'lxml'),
-    lambda soup : soup.title.text,
-    {'<self.prefix + name + self.suffix>': [len, digest]})  # 通过self访问注册的变量, 通过名称访问参数
-def get_title_length_and_md5(name):
+    preprocess_item,
+    lambda data: {re.sub('\s', '', k) : re.sub('\s', '', data[k]) for k in data}
+)
+def get_abstract(name):
     return get_data()
 
-if __name__ == '__main__':
+@src(
+    'http://localhost:8000/login',
+    method='post',
+    data = {
+        'username': 'Liadrinz',
+        'password': '123456'
+    }
+)
+def login():
+    return get_data()
+
+@src('http://localhost:8000/test_data', inherit_cookies=True)
+def get_greet():
+    return get_data()
+
+def test_abstract():
     for keyword in ['c++', 'python', 'java', 'c#', 'javascript']:
-        get_title_length_and_md5(name=keyword)
+        get_abstract(name=keyword)
+
+def test_greeting():
+    data = get_greet()
+    print(data)
+
+if __name__ == '__main__':
+    test_abstract()
+    test_greeting()

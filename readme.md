@@ -263,6 +263,82 @@ if __name__ == '__main__':
         '''
 ```
 
+### Cookie继承
+
+本节可使用test_server.py提供的测试服务器来进行测试
+
+```shell
+pip install flask  # 若已安装requirements.txt则省略此步
+python test_server.py
+```
+
+- 继承上层src的响应cookie作为下层src的请求cookie
+
+```py
+@src(
+    'http://localhost:8000/login',
+    method='post',
+    data = {
+        'username': 'Liadrinz',
+        'password': '123456'
+    }
+)
+@src('http://localhost:8000/test_data', inherit_cookies=True)
+def get_greet():
+    return get_data()
+```
+
+- 就近原则: inherit_cookies为True的@src向上继承离它最近的inherit_cookies为False的@src的cookie
+
+```py
+@src(
+    'http://localhost:8000/login',
+    method='post',
+    data = {
+        'username': 'Liadrinz',
+        'password': '123456'
+    }
+)
+@src('http://localhost:8000/test_data', inherit_cookies=True)
+@src('http://localhost:8000/test_data', inherit_cookies=True)
+@src(
+    'http://localhost:8000/login',
+    method='post',
+    data = {
+        'username': 'StevenZ',
+        'password': '123456'
+    }
+)
+@src('http://localhost:8000/test_data', inherit_cookies=True)
+@src('http://localhost:8000/test_data', inherit_cookies=True)
+def get_greet():
+    return get_data()
+```
+
+- 登录示例
+
+```py
+@src(
+    'http://localhost:8000/login',
+    method='post',
+    data = {
+        'username': 'Liadrinz',
+        'password': '123456'
+    }
+)
+def login():
+    return get_data()
+
+@src('http://localhost:8000/test_data', inherit_cookies=True)
+def get_greet():
+    return get_data()
+
+if __name__ == '__main__':
+    login()
+    data = get_greet()
+    print(data)
+```
+
 ### @thread多线程
 
 ```py

@@ -8,14 +8,20 @@ from xml.sax.saxutils import unescape
 class _Container:
     def __init__(self):
         self.data = None
-        self._arg_buffer = None
-        self._varname_buffer = None
-
-    def src(self, url, mode='t', coding='utf-8'):
+        self._cookies = None
+    
+    def src(self, url, data=None, method='get', mode='t', coding='utf-8', inherit_cookies=False):
         def wrapper(func):
             def inner_wrapper(*args, **kwargs):
                 _url, _coding = self._replace_all_params(kwargs, url, coding)
-                resp = requests.get(_url, headers=config.headers)
+                if method.lower() == 'post':
+                    resp = requests.post(_url, headers=config.headers, data=data, cookies=self._cookies if inherit_cookies else None)
+                elif method.lower() == 'get':
+                    resp = requests.get(
+                        _url + (f'?{"&".join([k + "=" + data[k] for k in data])}' if data is not None else ''),
+                        headers=config.headers, cookies=self._cookies if inherit_cookies else None)
+                if not inherit_cookies:
+                    self._cookies = resp.cookies
                 self.data = resp.content
                 if mode == 't':
                     self.data = self.data.decode(_coding)

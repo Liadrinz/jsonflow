@@ -2,6 +2,12 @@
 
 基于JSON数据流的爬虫框架
 
+## 使用之前
+
+```shell
+pip install -r requirements.txt
+```
+
 ## 入门
 
 ### @src资源获取

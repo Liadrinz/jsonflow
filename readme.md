@@ -2,6 +2,12 @@
 
 基于JSON数据流的爬虫框架
 
+## 使用之前
+
+```shell
+pip install -r requirements.txt
+```
+
 ## 入门
 
 ### @src资源获取
@@ -9,8 +15,8 @@
 - 获取单一页面
 
 ```py
-from decorators import src
-from access import get_data
+from jsonflow.decorators import src
+from jsonflow.access import get_data
 
 @src('https://baike.baidu.com/item/python')
 def download_page():
@@ -24,8 +30,8 @@ if __name__ == '__main__':
 - 使用参数
 
 ```py
-from decorators import src
-from access import get_data
+from jsonflow.decorators import src
+from jsonflow.access import get_data
 
 # 直接download_page的参数name作为url后缀
 @src('https://baike.baidu.com/item/<name>')
@@ -41,8 +47,8 @@ if __name__ == '__main__':
 ### @flow数据流
 
 ```py
-from decorators import src
-from access import get_data
+from jsonflow.decorators import src
+from jsonflow.access import get_data
 
 from bs4 import BeautifulSoup
 
@@ -73,8 +79,8 @@ if __name__ == '__main__':
 ```py
 from hashlib import md5
 
-from decorators import src
-from access import get_data
+from jsonflow.decorators import src
+from jsonflow.access import get_data
 
 from bs4 import BeautifulSoup
 

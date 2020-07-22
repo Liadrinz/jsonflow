@@ -15,13 +15,12 @@ pip install -r requirements.txt
 - 获取单一页面
 
 ```py
-from jsonflow.decorators import src
-from jsonflow.access import get_data
+from jsonflow.core import jf
 
-@src('https://baike.baidu.com/item/python')
+@jf.src('https://en.wikipedia.org/wiki/wiki/python')
 def download_page():
     with open('python.html', 'wb') as f:
-        f.write(get_data().encode('utf-8'))  # 使用get_data从jsonflow容器中获取数据
+        f.write(jf.data.encode('utf-8'))  # use get_data to fetch data from jsonflow container
 
 if __name__ == '__main__':
      download_page()
@@ -30,45 +29,43 @@ if __name__ == '__main__':
 - 使用参数
 
 ```py
-from jsonflow.decorators import src
-from jsonflow.access import get_data
+from jsonflow.core import jf
 
-# 直接以download_page的参数name作为url后缀
-@src('https://baike.baidu.com/item/<name>')
+# Use the parameter "name" of function "download_page" as the url suffix
+@jf.src('https://en.wikipedia.org/wiki/<name>')
 def download_page(name):
     with open(name + '.html', 'wb') as f:
-        f.write(get_data().encode('utf-8'))
+        f.write(jf.data.encode('utf-8'))
 
 if __name__ == '__main__':
     for keyword in ['c++', 'python', 'java', 'c#', 'javascript']:
-        download_page(name=keyword)  # 必须使用关键字传参
+        download_page(name=keyword)  # should be keyword arguments here
 ```
 
 ### @flow数据流
 
 ```py
-from jsonflow.decorators import src
-from jsonflow.access import get_data
+from jsonflow.core import jf
 
 from bs4 import BeautifulSoup
 
-@src('https://baike.baidu.com/item/<name>')
-@flow(
+@jf.src('https://en.wikipedia.org/wiki/<name>')
+@jf.flow(
     lambda data : BeautifulSoup(data, 'lxml'),
     lambda soup : soup.title.text)
 def get_title(name):
-    return get_data()
+    return jf.data
 
 if __name__ == '__main__':
     for keyword in ['c++', 'python', 'java', 'c#', 'javascript']:
         title = get_title(name=keyword)
         print(title)
         '''
-        C++_百度百科
-        Python（计算机程序设计语言）_百度百科
-        Java（计算机编程语言）_百度百科
-        c语言_百度百科
-        javascript_百度百科
+        C++ - Wikipedia
+        Python - Wikipedia
+        Java - Wikipedia
+        C - Wikipedia
+        JavaScript - Wikipedia
         '''
 ```
 
@@ -79,109 +76,96 @@ if __name__ == '__main__':
 ```py
 from hashlib import md5
 
-from jsonflow.decorators import src
-from jsonflow.access import get_data
+from jsonflow.core import jf
 
 from bs4 import BeautifulSoup
 
-# 获取md5
+# get md5
 def digest(s):
     return md5(s.encode()).hexdigest()
 
-@src('https://baike.baidu.com/item/<name>')
-@flow(
+@jf.src('https://en.wikipedia.org/wiki/<name>')
+@jf.flow(
     lambda data : BeautifulSoup(data, 'lxml'),
     lambda soup : soup.title.text,
     [len, digest])
-# 等价于lambda title : [len(title), digest(title)]
-# 也等价于[lambda title : len(title), lambda title : digest(title)]
+# equals to lambda title : [len(title), digest(title)]
+# also equals to [lambda title : len(title), lambda title : digest(title)]
 def get_title_length_and_md5(name):
-    return get_data()
+    return jf.data
 
 if __name__ == '__main__':
     for keyword in ['c++', 'python', 'java', 'c#', 'javascript']:
         data = get_title_length_and_md5(name=keyword)
         print(data)
         '''
-        [8, '93f7521b56af338defb8c37d0b35ed74']
-        [22, '06155ef01665f6b0811fe98b6951e0b5']
-        [18, 'dd5acc52d482c0ea46bd58c829a86061']
-        [8, '5221cb883f355ef52b834e4679f2219b']
-        [15, '7b81c50dde0675dced19ebd0e309b84a']
+        [15, 'b47f94ac21757616e99c4256320236c3']
+        ...
         '''
 ```
 
 - 字典
 
 ```py
-@src('https://baike.baidu.com/item/<name>')
-@flow(
+@jf.src('https://en.wikipedia.org/wiki/<name>')
+@jf.flow(
     lambda data : BeautifulSoup(data, 'lxml'),
     lambda soup : soup.title.text,
     {'length': len, 'md5': digest})
-# 等价于lambda title : {'length': len(title), 'md5': digest(title)}
-# 也等价于{'length': lambda title : len(title), 'md5': lambda title : digest(title)}
+# equals to lambda title : {'length': len(title), 'md5': digest(title)}
+# also equals to {'length': lambda title : len(title), 'md5': lambda title : digest(title)}
 def get_title_length_and_md5(name):
-    return get_data()
+    return jf.data
 
 if __name__ == '__main__':
     for keyword in ['c++', 'python', 'java', 'c#', 'javascript']:
         data = get_title_length_and_md5(name=keyword)
         print(data)
         '''
-        {'length': 8, 'md5': '93f7521b56af338defb8c37d0b35ed74'}
-        {'length': 22, 'md5': '06155ef01665f6b0811fe98b6951e0b5'}
-        {'length': 18, 'md5': 'dd5acc52d482c0ea46bd58c829a86061'}
-        {'length': 8, 'md5': '5221cb883f355ef52b834e4679f2219b'}
-        {'length': 15, 'md5': '7b81c50dde0675dced19ebd0e309b84a'}
+        {'length': 15, 'md5': 'b47f94ac21757616e99c4256320236c3'}
+        ...
         '''
 ```
 
 - 嵌套
 
 ```py
-@src('https://baike.baidu.com/item/<name>')
-@flow(
+@jf.src('https://en.wikipedia.org/wiki/<name>')
+@jf.flow(
     lambda data : BeautifulSoup(data, 'lxml'),
     lambda soup : soup.title.text,
     {'info': [len, digest]})
 def get_title_length_and_md5(name):
-    return get_data()
+    return jf.data
 
 if __name__ == '__main__':
     for keyword in ['c++', 'python', 'java', 'c#', 'javascript']:
         data = get_title_length_and_md5(name=keyword)
         print(data)
         '''
-        {'info': [8, '93f7521b56af338defb8c37d0b35ed74']}
-        {'info': [22, '06155ef01665f6b0811fe98b6951e0b5']}
-        {'info': [18, 'dd5acc52d482c0ea46bd58c829a86061']}
-        {'info': [8, '5221cb883f355ef52b834e4679f2219b']}
-        {'info': [15, '7b81c50dde0675dced19ebd0e309b84a']}
+        {'info': [15, 'b47f94ac21757616e99c4256320236c3']}
+        ...
         '''
 ```
 
 - 使用参数
 
 ```py
-@src('https://baike.baidu.com/item/<name>')
-@flow(
+@jf.src('https://en.wikipedia.org/wiki/<name>')
+@jf.flow(
     lambda data : BeautifulSoup(data, 'lxml'),
     lambda soup : soup.title.text,
     {'<name>': [len, digest]})  # 以参数name作为key
 def get_title_length_and_md5(name):
-    return get_data()
+    return jf.data
 
 if __name__ == '__main__':
     for keyword in ['c++', 'python', 'java', 'c#', 'javascript']:
         data = get_title_length_and_md5(name=keyword)
         print(data)
         '''
-        {'c++': [8, '93f7521b56af338defb8c37d0b35ed74']}
-        {'python': [22, '06155ef01665f6b0811fe98b6951e0b5']}
-        {'java': [18, 'dd5acc52d482c0ea46bd58c829a86061']}
-        {'c#': [8, '5221cb883f355ef52b834e4679f2219b']}
-        {'javascript': [15, '7b81c50dde0675dced19ebd0e309b84a']}
+        {'c++': [15, 'b47f94ac21757616e99c4256320236c3']}
+        ...
         '''
 ```
 
@@ -192,24 +176,21 @@ if __name__ == '__main__':
 #### Python表达式
 
 ```py
-@src('https://baike.baidu.com/item/<name>')
-@flow(
+@jf.src('https://en.wikipedia.org/wiki/<name>')
+@jf.flow(
     lambda data : BeautifulSoup(data, 'lxml'),
     lambda soup : soup.title.text,
     {'<name + "-" + str(len(name))>': [len, digest]})
 def get_title_length_and_md5(name):
-    return get_data()
+    return jf.data
 
 if __name__ == '__main__':
     for keyword in ['c++', 'python', 'java', 'c#', 'javascript']:
         data = get_title_length_and_md5(name=keyword)
         print(data)
         '''
-        {'c++-3': [8, '93f7521b56af338defb8c37d0b35ed74']}
-        {'python-6': [22, '06155ef01665f6b0811fe98b6951e0b5']}
-        {'java-4': [18, 'dd5acc52d482c0ea46bd58c829a86061']}
-        {'c#-2': [8, '5221cb883f355ef52b834e4679f2219b']}
-        {'javascript-10': [15, '7b81c50dde0675dced19ebd0e309b84a']}
+        {'c++-3': [15, 'b47f94ac21757616e99c4256320236c3']}
+        ...
         '''
 ```
 
@@ -218,54 +199,48 @@ if __name__ == '__main__':
 在模板的表达式中使用大于号和小于号时需要进行转义
 
 ```py
-@src('https://baike.baidu.com/item/<name>')
-@flow(
+@jf.src('https://en.wikipedia.org/wiki/<name>')
+@jf.flow(
     lambda data : BeautifulSoup(data, 'lxml'),
     lambda soup : soup.title.text,
-    {'<name + "-" + str(len(name) &lt; 3)>': [len, digest]})  # 转义
+    {'<name + "-" + str(len(name) &lt; 3)>': [len, digest]})  # escape
 def get_title_length_and_md5(name):
-    return get_data()
+    return jf.data
 
 if __name__ == '__main__':
     for keyword in ['c++', 'python', 'java', 'c#', 'javascript']:
         data = get_title_length_and_md5(name=keyword)
         print(data)
         '''
-        {'c++-False': [8, '93f7521b56af338defb8c37d0b35ed74']}
-        {'python-False': [22, '06155ef01665f6b0811fe98b6951e0b5']}
-        {'java-False': [18, 'dd5acc52d482c0ea46bd58c829a86061']}
-        {'c#-True': [8, '5221cb883f355ef52b834e4679f2219b']}
-        {'javascript-False': [15, '7b81c50dde0675dced19ebd0e309b84a']}
+        {'c++-False': [15, 'b47f94ac21757616e99c4256320236c3']}
+        ...
         '''
 ```
 
 #### 使用外部变量
 
 ```py
-from jsonflow.core import jflow
+from jsonflow.core import jf
 
-# 注册变量
-jflow.prefix = 'lang-'
-jflow.suffix = '-info'
+# Register variables
+jf.prefix = 'lang-'
+jf.suffix = '-info'
 
-@src('https://baike.baidu.com/item/<name>')
-@flow(
+@jf.src('https://en.wikipedia.org/wiki/<name>')
+@jf.flow(
     lambda data : BeautifulSoup(data, 'lxml'),
     lambda soup : soup.title.text,
-    {'<self.prefix + name + self.suffix>': [len, digest]})  # 通过self访问
+    {'<self.prefix + name + self.suffix>': [len, digest]})  # access through "self"
 def get_title_length_and_md5(name):
-    return get_data()
+    return jf.data
 
 if __name__ == '__main__':
     for keyword in ['c++', 'python', 'java', 'c#', 'javascript']:
         data = get_title_length_and_md5(name=keyword)
         print(data)
         '''
-        {'lang-c++-info': [8, '93f7521b56af338defb8c37d0b35ed74']}
-        {'lang-python-info': [22, '06155ef01665f6b0811fe98b6951e0b5']}
-        {'lang-java-info': [18, 'dd5acc52d482c0ea46bd58c829a86061']}
-        {'lang-c#-info': [8, '5221cb883f355ef52b834e4679f2219b']}
-        {'lang-javascript-info': [15, '7b81c50dde0675dced19ebd0e309b84a']}
+        {'lang-c++-info': [15, 'b47f94ac21757616e99c4256320236c3']}
+        ...
         '''
 ```
 
@@ -281,7 +256,7 @@ python test_server.py
 - 继承上层src的响应cookie作为下层src的请求cookie
 
 ```py
-@src(
+@jf.src(
     'http://localhost:8000/login',
     method='post',
     data = {
@@ -289,15 +264,15 @@ python test_server.py
         'password': '123456'
     }
 )
-@src('http://localhost:8000/test_data', inherit_cookies=True)
+@jf.src('http://localhost:8000/test_data', inherit_cookies=True)
 def get_greet():
-    return get_data()
+    return jf.data
 ```
 
 - 就近原则: inherit_cookies为True的@src向上继承离它最近的inherit_cookies为False的@src的cookie
 
 ```py
-@src(
+@jf.src(
     'http://localhost:8000/login',
     method='post',
     data = {
@@ -305,9 +280,9 @@ def get_greet():
         'password': '123456'
     }
 )
-@src('http://localhost:8000/test_data', inherit_cookies=True)
-@src('http://localhost:8000/test_data', inherit_cookies=True)
-@src(
+@jf.src('http://localhost:8000/test_data', inherit_cookies=True)
+@jf.src('http://localhost:8000/test_data', inherit_cookies=True)
+@jf.src(
     'http://localhost:8000/login',
     method='post',
     data = {
@@ -315,16 +290,16 @@ def get_greet():
         'password': '123456'
     }
 )
-@src('http://localhost:8000/test_data', inherit_cookies=True)
-@src('http://localhost:8000/test_data', inherit_cookies=True)
+@jf.src('http://localhost:8000/test_data', inherit_cookies=True)
+@jf.src('http://localhost:8000/test_data', inherit_cookies=True)
 def get_greet():
-    return get_data()
+    return jf.data
 ```
 
 - 登录示例
 
 ```py
-@src(
+@jf.src(
     'http://localhost:8000/login',
     method='post',
     data = {
@@ -335,7 +310,7 @@ def get_greet():
 def login():
     return get_data()
 
-@src('http://localhost:8000/test_data', inherit_cookies=True)
+@jf.src('http://localhost:8000/test_data', inherit_cookies=True)
 def get_greet():
     return get_data()
 
@@ -348,32 +323,30 @@ if __name__ == '__main__':
 ### @thread多线程
 
 ```py
-from jsonflow.decorators import src, flow, thread
-from jsonflow import config
+from jsonflow.core import jf
 
-config.max_workers = 4  # 线程数
+config.max_workers = 4  # max number of workers
 
-# 注册变量
+# register external variables
 jflow.prefix = 'lang-'
 jflow.suffix = '-info'
 
-@thread(callback=lambda data : print(data))  # 通过回调获取数据
-@src('https://baike.baidu.com/item/<name>')
-@flow(
+@jf.thread(callback=lambda data : print(data))  # access data through callbacks
+@jf.src('https://en.wikipedia.org/wiki/<name>')
+@jf.flow(
     lambda data : BeautifulSoup(data, 'lxml'),
     lambda soup : soup.title.text,
-    {'<self.prefix + name + self.suffix>': [len, digest]})  # 通过self访问
+    {'<self.prefix + name + self.suffix>': [len, digest]})  # access through "self"
 def get_title_length_and_md5(name):
-    return get_data()
+    return jf.data
 
 if __name__ == '__main__':
     for keyword in ['c++', 'python', 'java', 'c#', 'javascript']:
         get_title_length_and_md5(name=keyword)
         '''
-        {'lang-javascript-info': [15, '7b81c50dde0675dced19ebd0e309b84a']}
-        {'lang-c++-info': [8, '93f7521b56af338defb8c37d0b35ed74']}
-        {'lang-c#-info': [8, '5221cb883f355ef52b834e4679f2219b']}
-        {'lang-java-info': [18, 'dd5acc52d482c0ea46bd58c829a86061']}
-        {'lang-python-info': [22, '06155ef01665f6b0811fe98b6951e0b5']}
+        ...
+        {'lang-c++-info': [15, 'b47f94ac21757616e99c4256320236c3']}
+        ...
         '''
+    jf.wait()  # wait for the thread pool
 ```

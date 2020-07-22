@@ -15,13 +15,12 @@ pip install -r requirements.txt
 - Fetch a single page
 
 ```py
-from jsonflow.decorators import src
-from jsonflow.access import get_data
+from jsonflow.core import jf
 
-@src('https://en.wikipedia.org/wiki/wiki/python')
+@jf.src('https://en.wikipedia.org/wiki/wiki/python')
 def download_page():
     with open('python.html', 'wb') as f:
-        f.write(get_data().encode('utf-8'))  # use get_data to fetch data from jsonflow container
+        f.write(jf.data.encode('utf-8'))  # use get_data to fetch data from jsonflow container
 
 if __name__ == '__main__':
      download_page()
@@ -30,14 +29,13 @@ if __name__ == '__main__':
 - Use parameters
 
 ```py
-from jsonflow.decorators import src
-from jsonflow.access import get_data
+from jsonflow.core import jf
 
 # Use the parameter "name" of function "download_page" as the url suffix
-@src('https://en.wikipedia.org/wiki/<name>')
+@jf.src('https://en.wikipedia.org/wiki/<name>')
 def download_page(name):
     with open(name + '.html', 'wb') as f:
-        f.write(get_data().encode('utf-8'))
+        f.write(jf.data.encode('utf-8'))
 
 if __name__ == '__main__':
     for keyword in ['c++', 'python', 'java', 'c#', 'javascript']:
@@ -47,17 +45,16 @@ if __name__ == '__main__':
 ### @flow: The Data Flow
 
 ```py
-from jsonflow.decorators import src
-from jsonflow.access import get_data
+from jsonflow.core import jf
 
 from bs4 import BeautifulSoup
 
-@src('https://en.wikipedia.org/wiki/<name>')
-@flow(
+@jf.src('https://en.wikipedia.org/wiki/<name>')
+@jf.flow(
     lambda data : BeautifulSoup(data, 'lxml'),
     lambda soup : soup.title.text)
 def get_title(name):
-    return get_data()
+    return jf.data
 
 if __name__ == '__main__':
     for keyword in ['c++', 'python', 'java', 'c#', 'javascript']:
@@ -79,8 +76,7 @@ if __name__ == '__main__':
 ```py
 from hashlib import md5
 
-from jsonflow.decorators import src
-from jsonflow.access import get_data
+from jsonflow.core import jf
 
 from bs4 import BeautifulSoup
 
@@ -88,15 +84,15 @@ from bs4 import BeautifulSoup
 def digest(s):
     return md5(s.encode()).hexdigest()
 
-@src('https://en.wikipedia.org/wiki/<name>')
-@flow(
+@jf.src('https://en.wikipedia.org/wiki/<name>')
+@jf.flow(
     lambda data : BeautifulSoup(data, 'lxml'),
     lambda soup : soup.title.text,
     [len, digest])
 # equals to lambda title : [len(title), digest(title)]
 # also equals to [lambda title : len(title), lambda title : digest(title)]
 def get_title_length_and_md5(name):
-    return get_data()
+    return jf.data
 
 if __name__ == '__main__':
     for keyword in ['c++', 'python', 'java', 'c#', 'javascript']:
@@ -111,15 +107,15 @@ if __name__ == '__main__':
 - dict
 
 ```py
-@src('https://en.wikipedia.org/wiki/<name>')
-@flow(
+@jf.src('https://en.wikipedia.org/wiki/<name>')
+@jf.flow(
     lambda data : BeautifulSoup(data, 'lxml'),
     lambda soup : soup.title.text,
     {'length': len, 'md5': digest})
 # equals to lambda title : {'length': len(title), 'md5': digest(title)}
 # also equals to {'length': lambda title : len(title), 'md5': lambda title : digest(title)}
 def get_title_length_and_md5(name):
-    return get_data()
+    return jf.data
 
 if __name__ == '__main__':
     for keyword in ['c++', 'python', 'java', 'c#', 'javascript']:
@@ -134,13 +130,13 @@ if __name__ == '__main__':
 - nesting
 
 ```py
-@src('https://en.wikipedia.org/wiki/<name>')
-@flow(
+@jf.src('https://en.wikipedia.org/wiki/<name>')
+@jf.flow(
     lambda data : BeautifulSoup(data, 'lxml'),
     lambda soup : soup.title.text,
     {'info': [len, digest]})
 def get_title_length_and_md5(name):
-    return get_data()
+    return jf.data
 
 if __name__ == '__main__':
     for keyword in ['c++', 'python', 'java', 'c#', 'javascript']:
@@ -155,13 +151,13 @@ if __name__ == '__main__':
 - use parameters
 
 ```py
-@src('https://en.wikipedia.org/wiki/<name>')
-@flow(
+@jf.src('https://en.wikipedia.org/wiki/<name>')
+@jf.flow(
     lambda data : BeautifulSoup(data, 'lxml'),
     lambda soup : soup.title.text,
     {'<name>': [len, digest]})  # 以参数name作为key
 def get_title_length_and_md5(name):
-    return get_data()
+    return jf.data
 
 if __name__ == '__main__':
     for keyword in ['c++', 'python', 'java', 'c#', 'javascript']:
@@ -180,13 +176,13 @@ The template statement writes between the angle brackets, for example `<name>`, 
 #### Python Expression
 
 ```py
-@src('https://en.wikipedia.org/wiki/<name>')
-@flow(
+@jf.src('https://en.wikipedia.org/wiki/<name>')
+@jf.flow(
     lambda data : BeautifulSoup(data, 'lxml'),
     lambda soup : soup.title.text,
     {'<name + "-" + str(len(name))>': [len, digest]})
 def get_title_length_and_md5(name):
-    return get_data()
+    return jf.data
 
 if __name__ == '__main__':
     for keyword in ['c++', 'python', 'java', 'c#', 'javascript']:
@@ -203,13 +199,13 @@ if __name__ == '__main__':
 The less-than and greater-than symbol should be escaped in xml/html style
 
 ```py
-@src('https://en.wikipedia.org/wiki/<name>')
-@flow(
+@jf.src('https://en.wikipedia.org/wiki/<name>')
+@jf.flow(
     lambda data : BeautifulSoup(data, 'lxml'),
     lambda soup : soup.title.text,
     {'<name + "-" + str(len(name) &lt; 3)>': [len, digest]})  # escape
 def get_title_length_and_md5(name):
-    return get_data()
+    return jf.data
 
 if __name__ == '__main__':
     for keyword in ['c++', 'python', 'java', 'c#', 'javascript']:
@@ -224,19 +220,19 @@ if __name__ == '__main__':
 #### Register External Variables
 
 ```py
-from jsonflow.core import jflow
+from jsonflow.core import jf
 
 # Register variables
-jflow.prefix = 'lang-'
-jflow.suffix = '-info'
+jf.prefix = 'lang-'
+jf.suffix = '-info'
 
-@src('https://en.wikipedia.org/wiki/<name>')
-@flow(
+@jf.src('https://en.wikipedia.org/wiki/<name>')
+@jf.flow(
     lambda data : BeautifulSoup(data, 'lxml'),
     lambda soup : soup.title.text,
     {'<self.prefix + name + self.suffix>': [len, digest]})  # access through "self"
 def get_title_length_and_md5(name):
-    return get_data()
+    return jf.data
 
 if __name__ == '__main__':
     for keyword in ['c++', 'python', 'java', 'c#', 'javascript']:
@@ -260,7 +256,7 @@ python test_server.py
 - The response cookie of the upper layer @src is inherited by the lower ones as their request cookies
 
 ```py
-@src(
+@jf.src(
     'http://localhost:8000/login',
     method='post',
     data = {
@@ -268,15 +264,15 @@ python test_server.py
         'password': '123456'
     }
 )
-@src('http://localhost:8000/test_data', inherit_cookies=True)
+@jf.src('http://localhost:8000/test_data', inherit_cookies=True)
 def get_greet():
-    return get_data()
+    return jf.data
 ```
 
 - Nearby Principle: the @src decorators whose inherit_cookies equals True inherit from the nearest @src whose inherit_cookies equals False
 
 ```py
-@src(
+@jf.src(
     'http://localhost:8000/login',
     method='post',
     data = {
@@ -284,9 +280,9 @@ def get_greet():
         'password': '123456'
     }
 )
-@src('http://localhost:8000/test_data', inherit_cookies=True)
-@src('http://localhost:8000/test_data', inherit_cookies=True)
-@src(
+@jf.src('http://localhost:8000/test_data', inherit_cookies=True)
+@jf.src('http://localhost:8000/test_data', inherit_cookies=True)
+@jf.src(
     'http://localhost:8000/login',
     method='post',
     data = {
@@ -294,16 +290,16 @@ def get_greet():
         'password': '123456'
     }
 )
-@src('http://localhost:8000/test_data', inherit_cookies=True)
-@src('http://localhost:8000/test_data', inherit_cookies=True)
+@jf.src('http://localhost:8000/test_data', inherit_cookies=True)
+@jf.src('http://localhost:8000/test_data', inherit_cookies=True)
 def get_greet():
-    return get_data()
+    return jf.data
 ```
 
 - Login Demo
 
 ```py
-@src(
+@jf.src(
     'http://localhost:8000/login',
     method='post',
     data = {
@@ -314,7 +310,7 @@ def get_greet():
 def login():
     return get_data()
 
-@src('http://localhost:8000/test_data', inherit_cookies=True)
+@jf.src('http://localhost:8000/test_data', inherit_cookies=True)
 def get_greet():
     return get_data()
 
@@ -327,8 +323,7 @@ if __name__ == '__main__':
 ### @thread: Multithreading
 
 ```py
-from jsonflow.decorators import src, flow, thread
-from jsonflow import config
+from jsonflow.core import jf
 
 config.max_workers = 4  # max number of workers
 
@@ -336,14 +331,14 @@ config.max_workers = 4  # max number of workers
 jflow.prefix = 'lang-'
 jflow.suffix = '-info'
 
-@thread(callback=lambda data : print(data))  # access data through callbacks
-@src('https://en.wikipedia.org/wiki/<name>')
-@flow(
+@jf.thread(callback=lambda data : print(data))  # access data through callbacks
+@jf.src('https://en.wikipedia.org/wiki/<name>')
+@jf.flow(
     lambda data : BeautifulSoup(data, 'lxml'),
     lambda soup : soup.title.text,
     {'<self.prefix + name + self.suffix>': [len, digest]})  # access through "self"
 def get_title_length_and_md5(name):
-    return get_data()
+    return jf.data
 
 if __name__ == '__main__':
     for keyword in ['c++', 'python', 'java', 'c#', 'javascript']:
@@ -353,4 +348,5 @@ if __name__ == '__main__':
         {'lang-c++-info': [15, 'b47f94ac21757616e99c4256320236c3']}
         ...
         '''
+    jf.wait()  # wait for the thread pool
 ```

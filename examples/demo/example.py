@@ -1,8 +1,6 @@
 import re
 
-from jsonflow.decorators import src, flow, thread
-from jsonflow.access import get_data
-from jsonflow.core import jflow
+from jsonflow.core import jf
 from jsonflow import config
 
 from bs4 import BeautifulSoup
@@ -18,16 +16,16 @@ def preprocess_item(html):
             data[k.text] = v.text
     return data
 
-@thread(callback=lambda data : print(data))
-@src('https://baike.baidu.com/item/<name>', inherit_cookies=True)
-@flow(
+@jf.thread(callback=lambda data : print(data))
+@jf.src('https://baike.baidu.com/item/<name>', inherit_cookies=True)
+@jf.flow(
     preprocess_item,
     lambda data: {re.sub('\s', '', k) : re.sub('\s', '', data[k]) for k in data}
 )
 def get_abstract(name):
-    return get_data()
+    return jf.data
 
-@src(
+@jf.src(
     'http://localhost:8000/login',
     method='post',
     data = {
@@ -36,11 +34,11 @@ def get_abstract(name):
     }
 )
 def login():
-    return get_data()
+    return jf.data
 
-@src('http://localhost:8000/test_data', inherit_cookies=True)
+@jf.src('http://localhost:8000/test_data', inherit_cookies=True)
 def get_greet():
-    return get_data()
+    return jf.data
 
 def test_abstract():
     for keyword in ['c++', 'python', 'java', 'c#', 'javascript']:

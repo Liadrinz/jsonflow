@@ -3,14 +3,12 @@ import json
 
 from base64 import b64encode
 
-from jsonflow.decorators import src, flow, thread, register
-from jsonflow.access import get_data
-from jsonflow.core import jflow
+from jsonflow.core import jf
 
 from bs4 import BeautifulSoup
 from flask import Flask, request, render_template, abort
 
-@register
+@jf.register
 def parse_info(username, password):
     return (b64encode(username.encode()) + b'%%%' + b64encode(password.encode())).decode()
 
@@ -34,7 +32,7 @@ def avg(courses):
 
 app = Flask(__name__)
 
-@src(
+@jf.src(
     url='http://jwgl.bupt.edu.cn/jsxsd/xk/LoginToXk',
     method='post',
     data={
@@ -43,8 +41,8 @@ app = Flask(__name__)
         'encoded': '<self.parse_info(username, password)>'
     }
 )
-@src('http://jwgl.bupt.edu.cn/jsxsd/kscj/cjcx_list')
-@flow(
+@jf.src('http://jwgl.bupt.edu.cn/jsxsd/kscj/cjcx_list')
+@jf.flow(
     lambda raw : BeautifulSoup(raw, 'lxml'),
     lambda soup : soup.find('table'),
     [lambda table : [trim(th.text) for th in table.find_all('th')], lambda table : table.find_all('tr')],
@@ -52,7 +50,7 @@ app = Flask(__name__)
 )
 def get_avg(username, password):
     courses = []
-    headers, rows = get_data()
+    headers, rows = jf.data
     for row in rows:
         courses.append(dict(zip(headers, row)))
     return avg(courses)

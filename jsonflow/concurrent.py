@@ -7,6 +7,9 @@ class _Concurrent:
     def __init__(self):
         self.pool = ThreadPoolExecutor(max_workers=config.max_workers, thread_name_prefix='jsonflow_concurrent_')
     
+    def _wait(self):
+        self.pool.shutdown()
+
     def thread(self, callback=None):
         def wrapper(func):
             def inner_wrapper(*args, **kwargs):
@@ -21,4 +24,5 @@ class _Concurrent:
             return inner_wrapper
         return wrapper
 
-concurrent = _Concurrent()
+_concurrent = _Concurrent()
+wait = _concurrent._wait

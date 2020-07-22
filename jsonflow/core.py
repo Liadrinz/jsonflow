@@ -1,7 +1,9 @@
 import re
 import requests
 import jsonflow.config as config
+import jsonflow.util as util
 
+from jsonflow.concurrent import _concurrent
 from xml.sax.saxutils import unescape
 
 
@@ -10,18 +12,22 @@ class _Container:
         self.data = None
         self._cookies = None
         self._session = requests.Session()
-    
+
     def register(self, func):
         exec(f'self.{func.__name__} = func', globals(), locals())
 
-    def src(self, url, data=None, method='get', mode='t', coding='utf-8', inherit_cookies=False, new_session=False):
+    def src(self, url, data=None, method='get', mode='t', coding='utf-8', consumes=None, inherit_cookies=False, new_session=False):
         def wrapper(func):
             def inner_wrapper(*args, **kwargs):
                 if new_session:
                     self._session = requests.Session()
                 _url, _coding, _data = self._replace_all_params(kwargs, url, coding, data)
+                headers = {}
+                headers.update(config.headers)
+                if consumes is not None:
+                    headers['Content-Type'] = consumes
                 if method.lower() == 'post':
-                    resp = self._session.post(_url, headers=config.headers, data=_data, cookies=self._cookies if inherit_cookies else None)
+                    resp = self._session.post(_url, headers=headers, data=_data, cookies=self._cookies if inherit_cookies else None)
                 elif method.lower() == 'get':
                     resp = self._session.get(
                         _url + (f'?{"&".join([k + "=" + _data[k] for k in _data])}' if _data is not None else ''),
@@ -70,21 +76,7 @@ class _Container:
 
     def _replace_param(self, s, **kwargs):
         if type(s) == str:
-            non_match = True
-            command = s
-            for key in kwargs:
-                match = re.match(f'.*?<(.*?{key}.*?)>.*', command)
-                if match is None: continue
-                non_match = False
-                command = match.groups()[0]
-                command = command.replace(key, f'kwargs["{key}"]')
-                command = unescape(command)
-                command = f'<{command}>'
-            if not non_match:
-                command = command[1:-1]
-                repl = str(eval(command, globals(), locals()))
-                s = re.sub(f'<.*?>', repl, s)
-            return s
+            return util.parse_template(s, kwargs, globals(), locals())
         elif type(s) == list:
             result = []
             for item in s:
@@ -103,4 +95,6 @@ class _Container:
             new_args.append(self._replace_param(arg, **to_repl))
         return new_args
 
-jflow = _Container()
+jf = _Container()
+jf.thread = _concurrent.thread
+jf.wait = _concurrent._wait
